@@ -1,0 +1,40 @@
+version: '3.8'
+
+services:
+  mqtt-broker:
+    image: eclipse-mosquitto
+    container_name: mqtt-broker
+    volumes:
+      - /path/to/mosquitto/config:/mosquitto/config
+      - /path/to/mosquitto/data:/mosquitto/data
+      - /path/to/mosquitto/log:/mosquitto/log
+    ports:
+      - "1883:1883"
+      - "9001:9001"
+    networks:
+      - mqtt_network
+    command: mosquitto -c /mosquitto/config/mosquitto.conf
+
+grafana:
+    image: grafana/grafana
+    container_name: grafana
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    volumes:
+      - grafana-storage:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning
+    ports:
+      - "3000:3000"
+    networks:
+      - mqtt_network
+    command: sh -c "grafana-cli plugins install grafana-mqtt-datasource && grafana-server"
+
+# Sensor containers will be added here by the script
+
+networks:
+  mqtt_network:
+    driver: bridge
+
+volumes:
+  grafana-storage:

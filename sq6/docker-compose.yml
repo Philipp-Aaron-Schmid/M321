@@ -1,0 +1,94 @@
+version: '3.8'
+
+services:
+  mqtt-broker:
+    image: eclipse-mosquitto
+    container_name: mqtt-broker
+    volumes:
+      - ./path/to/mosquitto/config:/mosquitto/config
+      - ./path/to/mosquitto/data:/mosquitto/data
+      - ./path/to/mosquitto/log:/mosquitto/log
+    ports:
+      - "1883:1883"
+      - "9001:9001"
+    networks:
+      - mqtt_network
+    command: mosquitto -c /mosquitto/config/mosquitto.conf
+
+  grafana:
+    image: grafana/grafana
+    container_name: grafana
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    volumes:
+      - grafana-storage:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning
+    ports:
+      - "3000:3000"
+    networks:
+      - mqtt_network
+    command: sh -c "grafana-cli plugins install grafana-mqtt-datasource && grafana-server"
+
+  my-app-1:
+    build:
+      context: ./my-app
+      dockerfile: Dockerfile
+    container_name: javasensor-1
+    environment:
+      - PUBLISH_TOPIC=sensor/1/publish
+      - SUBSCRIBE_TOPIC=sensor/1/subscribe
+      - DELAY=1000
+      - MQTT_BROKER_HOST=mqtt-broker
+    networks:
+      - mqtt_network
+    command: ["sensor/1/publish", "sensor/1/subscribe", "1000", "mqtt-broker"]
+
+  my-app-2:
+    build:
+      context: ./my-app
+      dockerfile: Dockerfile
+    container_name: javasensor-2
+    environment:
+      - PUBLISH_TOPIC=sensor/2/publish
+      - SUBSCRIBE_TOPIC=sensor/2/subscribe
+      - DELAY=2000
+      - MQTT_BROKER_HOST=mqtt-broker
+    networks:
+      - mqtt_network
+    command: ["sensor/2/publish", "sensor/2/subscribe", "2000", "mqtt-broker"]
+
+  my-app-3:
+    build:
+      context: ./my-app
+      dockerfile: Dockerfile
+    container_name: javasensor-3
+    environment:
+      - PUBLISH_TOPIC=sensor/3/publish
+      - SUBSCRIBE_TOPIC=sensor/3/subscribe
+      - DELAY=3000
+      - MQTT_BROKER_HOST=mqtt-broker
+    networks:
+      - mqtt_network
+    command: ["sensor/3/publish", "sensor/3/subscribe", "3000", "mqtt-broker"]
+
+  my-app-4:
+    build:
+      context: ./my-app
+      dockerfile: Dockerfile
+    container_name: javasensor-4
+    environment:
+      - PUBLISH_TOPIC=sensor/4/publish
+      - SUBSCRIBE_TOPIC=sensor/4/subscribe
+      - DELAY=4000
+      - MQTT_BROKER_HOST=mqtt-broker
+    networks:
+      - mqtt_network
+    command: ["sensor/4/publish", "sensor/4/subscribe", "4000", "mqtt-broker"]
+
+networks:
+  mqtt_network:
+    driver: bridge
+
+volumes:
+  grafana-storage:
